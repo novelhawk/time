@@ -77,20 +77,14 @@ export async function initTimeEngine(
   if (!initPromise) {
     initPromise = (async () => {
       try {
-        let input = moduleOrPath;
-        if (!input && typeof process !== 'undefined' && process.versions?.node) {
-          try {
-            const fs = await import('node:fs');
-            const path = await import('node:path');
-            const wasmPath = path.resolve(process.cwd(), 'src/wasm-pkg/time_engine_wasm_bg.wasm');
-            if (fs.existsSync(wasmPath)) {
-              input = fs.readFileSync(wasmPath);
-            }
-          } catch (e) {
-            console.error('WASM node fallback error:', e);
-          }
-        }
-        if (input && !(input instanceof WebAssembly.Module) && typeof input !== 'string' && !(input instanceof URL)) {
+        const input: any = moduleOrPath || (globalThis as any).__WASM_BYTES__;
+
+        if (
+          input &&
+          !(input instanceof WebAssembly.Module) &&
+          typeof input !== 'string' &&
+          !(input instanceof URL)
+        ) {
           await initWasm({ module_or_path: input });
         } else {
           await initWasm(input);

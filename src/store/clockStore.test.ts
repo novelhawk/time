@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { createRoot } from 'solid-js';
 import {
   initTimeEngine,
@@ -25,9 +27,11 @@ import {
 } from './clockStore';
 
 describe('clockStore & timeEngine', () => {
-  beforeEach(async () => {
-    // Ensure Wasm engine is initialized
-    await initTimeEngine();
+  beforeAll(async () => {
+    // Ensure Wasm engine is initialized with loaded bytes in Node/Vitest
+    const wasmPath = path.resolve(process.cwd(), 'src/wasm-pkg/time_engine_wasm_bg.wasm');
+    const wasmBytes = fs.readFileSync(wasmPath);
+    await initTimeEngine(wasmBytes);
   });
 
   it('initializes the Wasm time engine', () => {
