@@ -695,6 +695,13 @@ pub fn get_entry_details(
 }
 
 fn resolve_single_id(id: &str, ts: Timestamp, local_tz: &TimeZone) -> Option<ResolvedTimeEntry> {
+    if id == "local" {
+        let local_name = local_tz.iana_name().unwrap_or("UTC");
+        let mut entry = build_iana_entry(local_name, ts, local_tz)?;
+        entry.id = "local".to_string();
+        entry.primary_label = format!("Local ({})", local_name);
+        return Some(entry);
+    }
     if let Some(name) = id.strip_prefix("iana:") {
         build_iana_entry(name, ts, local_tz)
     } else if let Some(offset_str) = id.strip_prefix("offset:") {
@@ -817,5 +824,18 @@ mod tests {
         let next = entry.next_transition.unwrap();
         assert_eq!(next.abbrev_after, "PDT");
         assert!(next.is_dst_after);
+    }
+
+    #[test]
+    fn test_resolve_default_entries() {
+        let ref_ms = 1731099600000.0;
+        let ids = vec!["local".to_string(), "iana:UTC".to_string()];
+        let entries = resolve_entries(&ids, ref_ms, "Europe/Rome");
+
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].id, "local");
+        assert_eq!(entries[0].primary_label, "Local (Europe/Rome)");
+        assert_eq!(entries[1].id, "iana:UTC");
+        assert_eq!(entries[1].primary_label, "UTC");
     }
 }
