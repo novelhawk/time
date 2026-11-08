@@ -1,5 +1,5 @@
 allowBuilds:
   '@swc/core': true
   esbuild: true
-patchedDependencies:
-  '@material/material-color-utilities': patches/@material__material-color-utilities.patch
+# patchedDependencies:
+  # '@material/material-color-utilities': patches/@material__material-color-utilities.patch

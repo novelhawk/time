@@ -4,16 +4,13 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@material/material-color-utilities': 579e9f0956d2095faaf50863957af118e451940072533d4c577ea0c136d4e7f9
-
 importers:
 
   .:
     dependencies:
       '@material/material-color-utilities':
         specifier: ^0.4.0
-        version: 0.4.0(patch_hash=579e9f0956d2095faaf50863957af118e451940072533d4c577ea0c136d4e7f9)
+        version: 0.4.0
       solid-js:
         specifier: ^1.9.4
         version: 1.9.18
@@ -1223,7 +1220,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@material/material-color-utilities@0.4.0(patch_hash=579e9f0956d2095faaf50863957af118e451940072533d4c577ea0c136d4e7f9)': {}
+  '@material/material-color-utilities@0.4.0': {}
 
   '@rollup/plugin-virtual@3.0.3(rollup@4.68.0)':
     optionalDependencies:
