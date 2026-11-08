@@ -364,16 +364,6 @@ pub fn search_time_query(
     for ast in &parsed_asts {
         match ast {
             TimeQueryAst::ZoneWithOffset { base, deltas, at_time } => {
-                let reference_ts = if let Some(dt) = at_time {
-                    if let Some(unix_ts) = dt.unix_timestamp {
-                        Timestamp::from_second(unix_ts).unwrap_or(ts)
-                    } else {
-                        ts
-                    }
-                } else {
-                    ts
-                };
-
                 // Resolve base timezone
                 let (base_tz, base_label) = match base {
                     BaseZoneExpr::Local => (local_tz.clone(), "Local".to_string()),
@@ -401,7 +391,32 @@ pub fn search_time_query(
                     }
                 };
 
-                let base_offset = reference_ts.to_zoned(base_tz).offset().seconds();
+                let reference_ts = if let Some(dt) = at_time {
+                    if let Some(unix_ts) = dt.unix_timestamp {
+                        Timestamp::from_second(unix_ts).unwrap_or(ts)
+                    } else if dt.date.is_some() || dt.time.is_some() {
+                        let base_zoned = ts.to_zoned(base_tz.clone());
+                        let (y, m, d) = dt.date.unwrap_or_else(|| {
+                            (base_zoned.year(), base_zoned.month(), base_zoned.day())
+                        });
+                        let (h, min, s) = dt.time.unwrap_or_else(|| {
+                            (base_zoned.hour(), base_zoned.minute(), base_zoned.second())
+                        });
+                        let civil_date = jiff::civil::date(y, m, d);
+                        let civil_time = jiff::civil::time(h, min, s, 0);
+                        let civil_dt = civil_date.to_datetime(civil_time);
+                        base_tz
+                            .to_zoned(civil_dt)
+                            .map(|z| z.timestamp())
+                            .unwrap_or(ts)
+                    } else {
+                        ts
+                    }
+                } else {
+                    ts
+                };
+
+                let base_offset = reference_ts.to_zoned(base_tz.clone()).offset().seconds();
 
                 if !deltas.is_empty() {
                     // Mathematical expression (e.g. Local+3, Europe/Rome + 5)
@@ -537,8 +552,32 @@ pub fn search_time_query(
                     }
                 }
             }
-            TimeQueryAst::PureOffset { total_seconds, .. } => {
-                let entry = build_offset_group_entry(*total_seconds, ts, &local_tz, None);
+            TimeQueryAst::PureOffset { total_seconds, at_time } => {
+                let reference_ts = if let Some(dt) = at_time {
+                    if let Some(unix_ts) = dt.unix_timestamp {
+                        Timestamp::from_second(unix_ts).unwrap_or(ts)
+                    } else if dt.date.is_some() || dt.time.is_some() {
+                        let local_zoned = ts.to_zoned(local_tz.clone());
+                        let (y, m, d) = dt.date.unwrap_or_else(|| {
+                            (local_zoned.year(), local_zoned.month(), local_zoned.day())
+                        });
+                        let (h, min, s) = dt.time.unwrap_or_else(|| {
+                            (local_zoned.hour(), local_zoned.minute(), local_zoned.second())
+                        });
+                        let civil_date = jiff::civil::date(y, m, d);
+                        let civil_time = jiff::civil::time(h, min, s, 0);
+                        let civil_dt = civil_date.to_datetime(civil_time);
+                        local_tz
+                            .to_zoned(civil_dt)
+                            .map(|z| z.timestamp())
+                            .unwrap_or(ts)
+                    } else {
+                        ts
+                    }
+                } else {
+                    ts
+                };
+                let entry = build_offset_group_entry(*total_seconds, reference_ts, &local_tz, None);
                 if seen_ids.insert(entry.id.clone()) {
                     results.push(entry);
                 }

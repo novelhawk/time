@@ -103,4 +103,40 @@ describe('SmartOmnibox', () => {
 
     container.remove();
   });
+
+  it('correctly shifts active seasonal abbreviation (CEST in July vs CET in November) via @ date syntax', () => {
+    // 1. July: Daylight Saving Time active (CEST)
+    setSearchQuery('Europe/Rome @ 2026-07-15 14:00');
+    const julyResults = searchResults();
+    expect(julyResults.length).toBeGreaterThan(0);
+    const romeJuly = julyResults.find(r => r.id === 'iana:Europe/Rome');
+    expect(romeJuly).toBeDefined();
+    expect(romeJuly?.formatted_time).toBe('14:00:00');
+    expect(romeJuly?.formatted_date).toBe('2026-07-15');
+    expect(romeJuly?.utc_offset_str).toBe('UTC+02:00');
+
+    const cestJuly = romeJuly?.abbreviations.find(b => b.code === 'CEST');
+    expect(cestJuly?.is_currently_active).toBe(true);
+
+    const cetJuly = romeJuly?.abbreviations.find(b => b.code === 'CET');
+    expect(cetJuly?.is_currently_active).toBe(false);
+
+    // 2. November: Standard Time active (CET)
+    setSearchQuery('Europe/Rome @ 2026-11-08 14:00');
+    const novResults = searchResults();
+    expect(novResults.length).toBeGreaterThan(0);
+    const romeNov = novResults.find(r => r.id === 'iana:Europe/Rome');
+    expect(romeNov).toBeDefined();
+    expect(romeNov?.formatted_time).toBe('14:00:00');
+    expect(romeNov?.formatted_date).toBe('2026-11-08');
+    expect(romeNov?.utc_offset_str).toBe('UTC+01:00');
+
+    const cetNov = romeNov?.abbreviations.find(b => b.code === 'CET');
+    expect(cetNov?.is_currently_active).toBe(true);
+
+    const cestNov = romeNov?.abbreviations.find(b => b.code === 'CEST');
+    expect(cestNov?.is_currently_active).toBe(false);
+
+    setSearchQuery('');
+  });
 });

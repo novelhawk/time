@@ -17,9 +17,16 @@ import {
   addEntry,
   removeEntry,
   setSelectedEntryId,
+  setCustomTime,
 } from '../store/clockStore';
 import type { ResolvedTimeEntry } from '../services/timeEngine';
 import AbbreviationPills from './AbbreviationPills';
+
+export function entryToEpochMs(entry: ResolvedTimeEntry): number {
+  const iso = `${entry.formatted_date}T${entry.formatted_time}Z`;
+  const utcMs = Date.parse(iso);
+  return utcMs - entry.offset_seconds * 1000;
+}
 
 export const SmartOmnibox: Component = () => {
   let inputRef: HTMLInputElement | undefined;
@@ -53,10 +60,13 @@ export const SmartOmnibox: Component = () => {
       }
     }
 
-    // Global keyboard shortcut: '/' to focus omnibox
+    // Global keyboard shortcut: '/' or 'Cmd/Ctrl + K' to focus omnibox
     function handleGlobalKeyDown(e: KeyboardEvent) {
+      const isCmdK = (e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K');
+      const isSlash = e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey;
+
       if (
-        e.key === '/' &&
+        (isCmdK || isSlash) &&
         document.activeElement?.tagName !== 'INPUT' &&
         document.activeElement?.tagName !== 'TEXTAREA'
       ) {
@@ -96,6 +106,12 @@ export const SmartOmnibox: Component = () => {
       e.preventDefault();
       const current = list[selectedIndex()] || list[0];
       if (current) {
+        if (searchQuery().includes('@')) {
+          const targetMs = entryToEpochMs(current);
+          if (!isNaN(targetMs)) {
+            setCustomTime(targetMs);
+          }
+        }
         addEntry(current.id);
         setSearchQuery('');
         setIsOpen(false);
@@ -312,6 +328,29 @@ export const SmartOmnibox: Component = () => {
 
                         {/* Action Buttons */}
                         <div class="flex items-center gap-1">
+                          {/* Scrub Board Action Button */}
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation();
+                              const targetMs = entryToEpochMs(entry);
+                              if (!isNaN(targetMs)) {
+                                setCustomTime(targetMs);
+                              }
+                              setSearchQuery('');
+                              setIsOpen(false);
+                            }}
+                            class="p-1.5 rounded-lg border border-outline-variant/50 bg-surface-container-low hover:bg-surface-container-highest text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                            title="Scrub all clocks on board to this target time"
+                            aria-label="Scrub board to this time"
+                          >
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 15 15" />
+                              <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+                            </svg>
+                          </button>
+
                           {/* Inspect Button */}
                           <button
                             type="button"

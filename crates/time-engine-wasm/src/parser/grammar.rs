@@ -556,10 +556,20 @@ pub fn pure_offset_parser<'a>() -> Parser<'a, TimeQueryAst> {
     })
 }
 
+/// Parses pure date/time queries (e.g. `@ 18:30`, `@ 2026-07-15 14:00`, `@ 2026-07-15`) defaulting base zone to Local
+pub fn pure_at_time_parser<'a>() -> Parser<'a, TimeQueryAst> {
+    flexible_datetime_parser().map(|at_time| TimeQueryAst::ZoneWithOffset {
+        base: BaseZoneExpr::Local,
+        deltas: Vec::new(),
+        at_time: Some(at_time),
+    })
+}
+
 /// Top-level time query parser:
-/// Tries pure offset and zone-with-offset using `plus` (generating all ambiguous interpretations)
+/// Tries pure at_time, pure offset, and zone-with-offset using `plus` (generating all ambiguous interpretations)
 pub fn time_query_parser<'a>() -> Parser<'a, TimeQueryAst> {
-    pure_offset_parser()
+    pure_at_time_parser()
+        .plus(pure_offset_parser())
         .plus(zone_math_parser())
         .or_else(fuzzy_search_fallback())
 }
@@ -583,14 +593,21 @@ pub fn parse_time_query<'a>(input: &'a str) -> Vec<TimeQueryAst> {
 
     let mut successes = Vec::new();
 
-    // 1. Try pure offset parser
+    // 1. Try pure at_time parser (e.g. `@ 18:30`, `@ 2026-07-15 14:00`, `@ 1730000000`)
+    for (ast, rest) in pure_at_time_parser().parse(raw) {
+        if rest.trim().is_empty() {
+            successes.push(ast);
+        }
+    }
+
+    // 2. Try pure offset parser
     for (ast, rest) in pure_offset_parser().parse(raw) {
         if rest.trim().is_empty() {
             successes.push(ast);
         }
     }
 
-    // 2. Try zone math parser
+    // 3. Try zone math parser
     for (ast, rest) in zone_math_parser().parse(raw) {
         if rest.trim().is_empty() {
             successes.push(ast);
