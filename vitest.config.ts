@@ -6,9 +6,19 @@ export default defineConfig({
   resolve: {
     conditions: ['browser', 'development'],
   },
+  server: {
+    deps: {
+      inline: ['@material/material-color-utilities'],
+    },
+  },
   test: {
     environment: 'happy-dom',
     setupFiles: ['./src/test-setup.ts'],
+    server: {
+      deps: {
+        inline: ['@material/material-color-utilities'],
+      },
+    },
   },
 });
 
