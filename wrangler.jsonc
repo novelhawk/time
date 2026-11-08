@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "time-website",
+  "compatibility_date": "2024-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "routes": [
+    {
+      "pattern": "time.example.com",
+      "custom_domain": true
+    }
+  ]
+}
