@@ -1,7 +1,9 @@
-import { For, Show, type Component } from 'solid-js';
+import { createSignal, For, Show, type Component } from 'solid-js';
 import {
   resolvedClocks,
   viewMode,
+  entries,
+  reorderEntries,
   removeEntry,
   setSelectedEntryId,
 } from '../store/clockStore';
@@ -10,6 +12,51 @@ import ClockCard from './ClockCard';
 export const ClockBoard: Component = () => {
   const clocks = () => resolvedClocks();
   const mode = () => viewMode();
+
+  const [draggedIndex, setDraggedIndex] = createSignal<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = createSignal<number | null>(null);
+
+  function handleDragStart(e: DragEvent, index: number) {
+    setDraggedIndex(index);
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(index));
+    }
+  }
+
+  function handleDragOver(e: DragEvent, index: number) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+    if (dragOverIndex() !== index) {
+      setDragOverIndex(index);
+    }
+  }
+
+  function handleDragLeave(e: DragEvent, index: number) {
+    if (dragOverIndex() === index) {
+      setDragOverIndex(null);
+    }
+  }
+
+  function handleDrop(e: DragEvent, targetIndex: number) {
+    e.preventDefault();
+    const sourceIndex = draggedIndex();
+    if (sourceIndex !== null && sourceIndex !== targetIndex) {
+      const current = [...entries()];
+      const [moved] = current.splice(sourceIndex, 1);
+      current.splice(targetIndex, 0, moved);
+      reorderEntries(current);
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }
+
+  function handleDragEnd() {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }
 
   return (
     <section class="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 flex-1 flex flex-col" aria-label="Clock Board">
@@ -38,10 +85,18 @@ export const ClockBoard: Component = () => {
           }
         >
           <For each={clocks()}>
-            {clock => (
+            {(clock, index) => (
               <ClockCard
                 clock={clock}
+                index={index()}
                 viewMode={mode()}
+                isDragging={draggedIndex() === index()}
+                isDragOver={dragOverIndex() === index()}
+                onDragStart={e => handleDragStart(e, index())}
+                onDragOver={e => handleDragOver(e, index())}
+                onDragLeave={e => handleDragLeave(e, index())}
+                onDrop={e => handleDrop(e, index())}
+                onDragEnd={handleDragEnd}
                 onSelect={() => setSelectedEntryId(clock.id)}
                 onRemove={() => removeEntry(clock.id)}
               />

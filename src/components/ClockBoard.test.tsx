@@ -16,6 +16,7 @@ import {
   selectedEntryId,
   setSelectedEntryId,
   setLiveNowMs,
+  reorderEntries,
 } from '../store/clockStore';
 
 describe('ClockBoard, TopToolbar & EntryDetailDrawer', () => {
@@ -142,6 +143,67 @@ describe('ClockBoard, TopToolbar & EntryDetailDrawer', () => {
     // Verify date is hidden (no calendar date string like 2026-11-08)
     expect(secondCard.textContent).not.toContain('2026-');
 
+    container.remove();
+  });
+
+  it('allows drag and dropping cards to reorder entries in list and grid views', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    render(() => <ClockBoard />, container);
+
+    // Initial entries should contain at least 2 items
+    reorderEntries(['local', 'iana:UTC']);
+    expect(entries()).toEqual(['local', 'iana:UTC']);
+
+    const cards = container.querySelectorAll('article[data-clock-card]');
+    expect(cards.length).toBeGreaterThanOrEqual(2);
+
+    const firstCard = cards[0] as HTMLElement;
+    const secondCard = cards[1] as HTMLElement;
+
+    expect(firstCard.getAttribute('data-clock-id')).toBe('local');
+    expect(secondCard.getAttribute('data-clock-id')).toBe('iana:UTC');
+
+    // Create mock DataTransfer
+    const mockDataTransfer = {
+      data: {} as Record<string, string>,
+      effectAllowed: 'none',
+      dropEffect: 'none',
+      setData(k: string, v: string) {
+        this.data[k] = v;
+      },
+      getData(k: string) {
+        return this.data[k] || '';
+      },
+    };
+
+    // 1. Drag start on first card (index 0)
+    const dragStartEvt = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStartEvt, 'dataTransfer', { value: mockDataTransfer });
+    firstCard.dispatchEvent(dragStartEvt);
+
+    // 2. Drag over second card (index 1)
+    const dragOverEvt = new Event('dragover', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragOverEvt, 'dataTransfer', { value: mockDataTransfer });
+    secondCard.dispatchEvent(dragOverEvt);
+
+    // 3. Drop onto second card (index 1)
+    const dropEvt = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(dropEvt, 'dataTransfer', { value: mockDataTransfer });
+    secondCard.dispatchEvent(dropEvt);
+
+    // Verify entries were reordered
+    expect(entries()).toEqual(['iana:UTC', 'local']);
+
+    // Verify localStorage updated
+    const saved = localStorage.getItem('time_entries');
+    expect(saved).toBe(JSON.stringify(['iana:UTC', 'local']));
+
+    // Verify URL query parameter (?z=...)
+    expect(window.location.search).toContain('iana%3AUTC%2Clocal');
+
+    // Clean up / reset
+    reorderEntries(['local', 'iana:UTC']);
     container.remove();
   });
 });
