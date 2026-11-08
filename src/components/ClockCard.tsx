@@ -23,6 +23,8 @@ export const ClockCard: Component<ClockCardProps> = props => {
 
   return (
     <article
+      data-clock-card
+      data-clock-id={clock().id}
       class={`group relative bg-surface-container border border-outline-variant/40 hover:border-outline/80 rounded-2xl transition-all cursor-pointer select-none shadow-xs hover:shadow-md ${
         isList()
           ? 'p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'
@@ -115,11 +117,11 @@ export const ClockCard: Component<ClockCardProps> = props => {
         </div>
       </div>
 
-      {/* Big Digital Clock & Date */}
+      {/* Big Digital Clock & Day Offset */}
       <div
         class={`flex shrink-0 ${
           isList()
-            ? 'items-baseline sm:items-end justify-between sm:justify-end gap-4 text-right'
+            ? 'items-baseline sm:items-end justify-between sm:justify-end gap-3 text-right'
             : 'mt-6 items-baseline justify-between pt-4 border-t border-outline-variant/20'
         }`}
       >
@@ -127,17 +129,14 @@ export const ClockCard: Component<ClockCardProps> = props => {
           {clock().formatted_time}
         </time>
 
-        <div class="flex items-center gap-1.5 text-xs font-mono text-on-surface-variant">
-          <span>{clock().formatted_date}</span>
-          <Show when={clock().day_delta_from_local !== 0}>
-            <span
-              class="px-1 py-0.2 rounded text-[10px] font-bold bg-tertiary-container text-on-tertiary-container"
-              title={`Date shifted ${clock().day_delta_from_local > 0 ? '+1' : '-1'} day relative to your local time`}
-            >
-              {clock().day_delta_from_local > 0 ? '+1d' : '-1d'}
-            </span>
-          </Show>
-        </div>
+        <Show when={clock().day_delta_from_local !== 0}>
+          <span
+            class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-tertiary-container text-on-tertiary-container"
+            title={`Date shifted ${clock().day_delta_from_local > 0 ? '+1' : '-1'} day relative to your local time`}
+          >
+            {clock().day_delta_from_local > 0 ? '+1d' : '-1d'}
+          </span>
+        </Show>
       </div>
     </article>
   );

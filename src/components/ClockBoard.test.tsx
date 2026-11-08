@@ -15,6 +15,7 @@ import {
   removeEntry,
   selectedEntryId,
   setSelectedEntryId,
+  setLiveNowMs,
 } from '../store/clockStore';
 
 describe('ClockBoard, TopToolbar & EntryDetailDrawer', () => {
@@ -113,5 +114,34 @@ describe('ClockBoard, TopToolbar & EntryDetailDrawer', () => {
     // Close
     setSelectedEntryId(null);
     drawerContainer.remove();
+  });
+
+  it('preserves card DOM node identity and hover state across time ticks without redrawing', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    render(() => <ClockBoard />, container);
+
+    const cards = container.querySelectorAll('article[data-clock-card]');
+    expect(cards.length).toBeGreaterThanOrEqual(2);
+
+    const secondCard = cards[1] as HTMLElement;
+    expect(secondCard).toBeDefined();
+
+    // Hover over card
+    secondCard.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+
+    // Simulate time tick
+    setLiveNowMs(Date.now() + 2000);
+
+    const cardsAfterTick = container.querySelectorAll('article[data-clock-card]');
+    const secondCardAfterTick = cardsAfterTick[1] as HTMLElement;
+
+    // Strict DOM node identity is preserved: <article> was not destroyed or redrawn
+    expect(secondCardAfterTick).toBe(secondCard);
+
+    // Verify date is hidden (no calendar date string like 2026-11-08)
+    expect(secondCard.textContent).not.toContain('2026-');
+
+    container.remove();
   });
 });

@@ -6,6 +6,7 @@ import {
   onCleanup,
   Show,
   For,
+  on,
   type Component,
 } from 'solid-js';
 import {
@@ -46,10 +47,25 @@ export const SmartOmnibox: Component = () => {
     }
   });
 
-  // Reset selected index whenever the query results change
+  // Reset selected index ONLY when the user modifies the search query
+  createEffect(
+    on(
+      () => searchQuery(),
+      () => {
+        setSelectedIndex(0);
+      },
+      { defer: true }
+    )
+  );
+
+  // Keep selected index safely clamped within bounds if results list shrinks
   createEffect(() => {
-    results();
-    setSelectedIndex(0);
+    const len = results().length;
+    if (len === 0) {
+      if (selectedIndex() !== 0) setSelectedIndex(0);
+    } else if (selectedIndex() >= len) {
+      setSelectedIndex(Math.max(0, len - 1));
+    }
   });
 
   // Close dropdown on click outside
@@ -248,6 +264,8 @@ export const SmartOmnibox: Component = () => {
 
                   return (
                     <div
+                      data-result-item
+                      data-entry-id={entry.id}
                       class={`group flex items-center justify-between p-3.5 transition-all cursor-pointer ${
                         isSelected()
                           ? 'bg-surface-container-highest border-l-4 border-l-primary pl-3'
@@ -313,17 +331,14 @@ export const SmartOmnibox: Component = () => {
                           <span class="text-base font-bold text-on-surface tracking-wider">
                             {entry.formatted_time}
                           </span>
-                          <div class="flex items-center gap-1 text-[11px] text-on-surface-variant">
-                            <span>{entry.formatted_date}</span>
-                            <Show when={entry.day_delta_from_local !== 0}>
-                              <span
-                                class="px-1 py-0.2 rounded text-[9px] font-bold bg-tertiary-container text-on-tertiary-container"
-                                title={`Date shifted ${entry.day_delta_from_local > 0 ? '+1' : '-1'} day relative to your local time`}
-                              >
-                                {entry.day_delta_from_local > 0 ? '+1d' : '-1d'}
-                              </span>
-                            </Show>
-                          </div>
+                          <Show when={entry.day_delta_from_local !== 0}>
+                            <span
+                              class="px-1 py-0.2 rounded text-[9px] font-bold bg-tertiary-container text-on-tertiary-container mt-0.5"
+                              title={`Date shifted ${entry.day_delta_from_local > 0 ? '+1' : '-1'} day relative to your local time`}
+                            >
+                              {entry.day_delta_from_local > 0 ? '+1d' : '-1d'}
+                            </span>
+                          </Show>
                         </div>
 
                         {/* Action Buttons */}

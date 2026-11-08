@@ -14,6 +14,7 @@ import {
   searchResults,
   entries,
   addEntry,
+  setLiveNowMs,
 } from '../store/clockStore';
 
 describe('SmartOmnibox', () => {
@@ -138,5 +139,52 @@ describe('SmartOmnibox', () => {
     expect(cestNov?.is_currently_active).toBe(false);
 
     setSearchQuery('');
+  });
+
+  it('preserves hovered item selection and DOM node identity across time ticks without resetting to first item', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    render(() => <SmartOmnibox />, container);
+
+    const input = container.querySelector('input')!;
+    input.focus();
+    setSearchQuery('Europe');
+
+    const results = searchResults();
+    expect(results.length).toBeGreaterThan(1);
+
+    const resultRows = container.querySelectorAll('[data-result-item]');
+    expect(resultRows.length).toBeGreaterThan(1);
+
+    const secondRow = resultRows[1] as HTMLElement;
+    expect(secondRow).toBeDefined();
+
+    // Hover over the second item
+    secondRow.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+
+    // Second row should now have active selection class
+    expect(secondRow.className).toContain('border-l-primary');
+    expect(resultRows[0].className).not.toContain('border-l-primary');
+
+    // Simulate time tick by advancing liveNowMs
+    setLiveNowMs(Date.now() + 2000);
+
+    // Re-query rows after time tick
+    const resultRowsAfterTick = container.querySelectorAll('[data-result-item]');
+    const secondRowAfterTick = resultRowsAfterTick[1] as HTMLElement;
+
+    // 1. Strict DOM identity is preserved (not redrawn / replaced)
+    expect(secondRowAfterTick).toBe(secondRow);
+
+    // 2. Selection remains on the hovered item and DOES NOT reset to first item
+    expect(secondRowAfterTick.className).toContain('border-l-primary');
+    expect(resultRowsAfterTick[0].className).not.toContain('border-l-primary');
+
+    // 3. Date string is hidden in the search results
+    const dateText = container.textContent;
+    expect(dateText).not.toContain('2026-');
+
+    setSearchQuery('');
+    container.remove();
   });
 });

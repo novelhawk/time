@@ -96,19 +96,16 @@ export const EntryDetailDrawer: Component = () => {
                 </Show>
               </div>
 
-              {/* Live Big Time & Date */}
+              {/* Live Big Time & Day Delta */}
               <div class="mt-2 flex items-baseline gap-3">
                 <time class="text-3xl sm:text-4xl font-bold text-primary tracking-wider tabular-nums">
                   {detail()!.formatted_time}
                 </time>
-                <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                  <span>{detail()!.formatted_date}</span>
-                  <Show when={detail()!.day_delta_from_local !== 0}>
-                    <span class="px-1 py-0.2 rounded text-[10px] font-bold bg-tertiary-container text-on-tertiary-container">
-                      {detail()!.day_delta_from_local > 0 ? '+1d' : '-1d'}
-                    </span>
-                  </Show>
-                </div>
+                <Show when={detail()!.day_delta_from_local !== 0}>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-tertiary-container text-on-tertiary-container">
+                    {detail()!.day_delta_from_local > 0 ? '+1d' : '-1d'}
+                  </span>
+                </Show>
               </div>
             </div>
 

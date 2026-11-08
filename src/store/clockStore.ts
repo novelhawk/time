@@ -2,10 +2,12 @@ import {
   createSignal,
   createMemo,
   createEffect,
+  createComputed,
   createRoot,
   onCleanup,
   type Accessor,
 } from 'solid-js';
+import { createStore, reconcile } from 'solid-js/store';
 import {
   initTimeEngine,
   isTimeEngineReady,
@@ -202,26 +204,50 @@ const {
   const nowMs = createMemo(() => customTimeMs() ?? liveNowMs());
   const isCustomTime = createMemo(() => customTimeMs() !== null);
 
-  const resolvedClocks = createMemo(() => {
-    if (!isTimeEngineReady()) return [];
+  // Fine-grained reconciled stores to preserve object and DOM identity across time ticks
+  const [clocksStore, setClocksStore] = createStore<{ list: ResolvedTimeEntry[] }>({ list: [] });
+  const [searchStore, setSearchStore] = createStore<{
+    summary: string | null;
+    isAmbiguous: boolean;
+    results: ResolvedTimeEntry[];
+  }>({
+    summary: null,
+    isAmbiguous: false,
+    results: [],
+  });
+
+  createComputed(() => {
+    if (!isTimeEngineReady()) {
+      setClocksStore('list', []);
+      return;
+    }
     const currentEntries = entries();
     const currentNow = nowMs();
     const tz = localTz();
-    return resolve_entries(currentEntries, currentNow, tz);
+    const freshClocks = resolve_entries(currentEntries, currentNow, tz);
+    setClocksStore('list', reconcile(freshClocks, { key: 'id' }));
   });
 
-  const searchResponse = createMemo(() => {
+  createComputed(() => {
     if (!isTimeEngineReady()) {
-      return { parsed_expression_summary: null, is_ambiguous: false, results: [] };
+      setSearchStore({ summary: null, isAmbiguous: false, results: [] });
+      return;
     }
     const q = searchQuery().trim();
     const currentNow = nowMs();
     const tz = localTz();
-    return search_time_query(q, currentNow, tz);
+    const resp = search_time_query(q, currentNow, tz);
+    setSearchStore('summary', resp.parsed_expression_summary ?? null);
+    setSearchStore('isAmbiguous', resp.is_ambiguous);
+    setSearchStore('results', reconcile(resp.results, { key: 'id' }));
   });
 
-  const searchResults = createMemo(() => {
-    return searchResponse().results;
+  const resolvedClocks = () => clocksStore.list;
+  const searchResults = () => searchStore.results;
+  const searchResponse = (): SearchResponse => ({
+    parsed_expression_summary: searchStore.summary,
+    is_ambiguous: searchStore.isAmbiguous,
+    results: searchStore.results,
   });
 
   const selectedEntryDetails = createMemo(() => {
@@ -327,6 +353,8 @@ export {
   setSelectedEntryId,
   localTz,
   setLocalTz,
+  liveNowMs,
+  setLiveNowMs,
   startTicker,
   stopTicker,
 };
