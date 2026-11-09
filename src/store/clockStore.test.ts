@@ -24,6 +24,8 @@ import {
   setCustomTime,
   resetToCurrentTime,
   isCustomTime,
+  computeTickTarget,
+  computeNextDelay,
 } from './clockStore';
 
 describe('clockStore & timeEngine', () => {
@@ -142,17 +144,50 @@ describe('clockStore & timeEngine', () => {
     });
   });
 
-  it('compensates drift by scheduling next tick on integer second boundary', () => {
-    const now = 1731000000350; // 350ms past the second
-    const delay = 1000 - (now % 1000);
-    expect(delay).toBe(650);
+  it('rounds up to updated second when falling short within 50ms and compensates drift', () => {
+    // 1. Mid-second: stays on current second
+    const midSecond = 1731000000350;
+    expect(computeTickTarget(midSecond)).toBe(1731000000000);
+    expect(computeNextDelay(1731000000000, midSecond)).toBe(650);
 
-    const now2 = 1731000000999;
-    const delay2 = 1000 - (now2 % 1000);
-    expect(delay2).toBe(1);
+    // 2. Before 50ms window (60ms short): stays on current second
+    const beforeWindow = 1731000000940;
+    expect(computeTickTarget(beforeWindow)).toBe(1731000000000);
+    expect(computeNextDelay(1731000000000, beforeWindow)).toBe(60);
 
-    const now3 = 1731000000000;
-    const delay3 = 1000 - (now3 % 1000);
-    expect(delay3).toBe(1000);
+    // 3. Exactly on 50ms threshold (50ms short): rounds up early
+    const onThreshold = 1731000000950;
+    const targetThreshold = computeTickTarget(onThreshold);
+    expect(targetThreshold).toBe(1731000001000);
+    expect(computeNextDelay(targetThreshold, onThreshold)).toBe(1050);
+
+    // 4. Timer falls short by 2ms (998ms into second): rounds up to new second early
+    // and avoids redundant micro-tick by targeting the following second
+    const fallsShort = 1731000000998;
+    const targetEarly = computeTickTarget(fallsShort);
+    expect(targetEarly).toBe(1731000001000);
+    expect(computeNextDelay(targetEarly, fallsShort)).toBe(1002);
+
+    // 5. Timer falls short by 1ms (999ms into second)
+    const shortBy1ms = 1731000000999;
+    const target1ms = computeTickTarget(shortBy1ms);
+    expect(target1ms).toBe(1731000001000);
+    expect(computeNextDelay(target1ms, shortBy1ms)).toBe(1001);
+
+    // 6. Exactly on boundary
+    const exactBoundary = 1731000001000;
+    const targetExact = computeTickTarget(exactBoundary);
+    expect(targetExact).toBe(1731000001000);
+    expect(computeNextDelay(targetExact, exactBoundary)).toBe(1000);
+
+    // 7. Slightly late tick (15ms past boundary)
+    const slightlyLate = 1731000001015;
+    const targetLate = computeTickTarget(slightlyLate);
+    expect(targetLate).toBe(1731000001000);
+    expect(computeNextDelay(targetLate, slightlyLate)).toBe(985);
+
+    // 8. Heavy throttle / lag past target + 1000ms: clamped to 0
+    const heavilyThrottled = 1731000002100;
+    expect(computeNextDelay(1731000001000, heavilyThrottled)).toBe(0);
   });
 });

@@ -78,17 +78,34 @@ function getInitialViewMode(): ViewMode {
 // Core Signals
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// High-Precision Zero-Drift Clock Ticker
+// ---------------------------------------------------------------------------
+
+/**
+ * Computes the synchronized integer second timestamp.
+ * If the current time is within 50ms of the next second boundary (`now + 50`),
+ * it rounds up to the next second boundary so the UI updates early instead of lagging.
+ */
+export function computeTickTarget(now: number = Date.now()): number {
+  return Math.floor((now + 50) / 1000) * 1000;
+}
+
+/**
+ * Computes delay in milliseconds until the next integer second tick boundary.
+ * Compensates for short or delayed ticks without micro-delays, maintaining zero drift.
+ */
+export function computeNextDelay(targetMs: number, now: number = Date.now()): number {
+  return Math.max(0, targetMs + 1000 - now);
+}
+
 const [entries, setEntries] = createSignal<string[]>(getInitialEntries());
 const [viewMode, setViewModeSignal] = createSignal<ViewMode>(getInitialViewMode());
-const [liveNowMs, setLiveNowMs] = createSignal<number>(Date.now());
+const [liveNowMs, setLiveNowMs] = createSignal<number>(computeTickTarget());
 const [customTimeMs, setCustomTimeMs] = createSignal<number | null>(null);
 const [searchQuery, setSearchQuery] = createSignal<string>('');
 const [selectedEntryId, setSelectedEntryId] = createSignal<string | null>(null);
 const [localTz, setLocalTz] = createSignal<string>(getBrowserTimeZone());
-
-// ---------------------------------------------------------------------------
-// High-Precision Zero-Drift Clock Ticker
-// ---------------------------------------------------------------------------
 
 let timerId: ReturnType<typeof setTimeout> | undefined;
 
@@ -104,13 +121,11 @@ function startTicker(): void {
 
   function scheduleNextTick(): void {
     const now = Date.now();
-    // Time remaining until the next exact second integer boundary
-    const delay = 1000 - (now % 1000);
+    const d = computeTickTarget(now);
+    setLiveNowMs(d);
 
-    timerId = setTimeout(() => {
-      setLiveNowMs(Date.now());
-      scheduleNextTick();
-    }, delay);
+    const delay = computeNextDelay(d, Date.now());
+    timerId = setTimeout(scheduleNextTick, delay);
   }
 
   scheduleNextTick();
@@ -123,7 +138,7 @@ if (typeof window !== 'undefined') {
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        setLiveNowMs(Date.now());
+        setLiveNowMs(computeTickTarget());
         startTicker();
       }
     });
@@ -341,7 +356,7 @@ export function setCustomTime(timeMs: number | null): void {
 
 export function resetToCurrentTime(): void {
   setCustomTimeMs(null);
-  setLiveNowMs(Date.now());
+  setLiveNowMs(computeTickTarget());
 }
 
 export {
