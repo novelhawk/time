@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines" : { 
+    "npm" : ">=12.0.0",
+    "node" : ">=26.0.0"
+  },
   "scripts": {
     "dev": "pnpm run build:wasm && vite",
     "build:wasm": "wasm-pack build crates/time-engine-wasm --target web --out-dir ../../src/wasm-pkg",
