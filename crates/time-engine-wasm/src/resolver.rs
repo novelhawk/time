@@ -379,7 +379,11 @@ pub fn search_time_query(
                         (tz, abbr.clone())
                     }
                     BaseZoneExpr::LocationQuery(loc) => {
-                        let rep = resolve_location_to_zone(loc).unwrap_or_else(|| "UTC".to_string());
+                        let rep = if let Some(r) = resolve_location_to_zone(loc) {
+                            r
+                        } else {
+                            continue;
+                        };
                         let tz = TimeZone::get(&rep).unwrap_or(TimeZone::UTC);
                         (tz, loc.clone())
                     }
@@ -826,6 +830,26 @@ mod tests {
 
         let expr_entry = res.results.iter().find(|r| r.kind == "computed_expression").unwrap();
         assert!(!expr_entry.sibling_iana_zones.is_empty(), "Should list matching IANA zones for Rome+5");
+    }
+
+    #[test]
+    fn test_search_local_plus_5_in_rome() {
+        let ref_ms = 1731099600000.0; // Nov 8, 2024 (Rome is UTC+1)
+        let res = search_time_query("Local + 5", ref_ms, "Europe/Rome");
+
+        assert!(!res.is_ambiguous, "Local + 5 should not be ambiguous");
+        assert!(!res.results.is_empty(), "Should return results for Local + 5");
+
+        // Every returned entry must correspond to GMT+6 (21600s), never GMT+5 (18000s)
+        for r in &res.results {
+            assert_eq!(
+                r.offset_seconds,
+                6 * 3600,
+                "Expected GMT+6 (21600s), but got {}s for entry {}",
+                r.offset_seconds,
+                r.id
+            );
+        }
     }
 
     #[test]

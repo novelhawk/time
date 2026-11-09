@@ -7,6 +7,7 @@ import SmartOmnibox from './SmartOmnibox';
 import {
   initTimeEngine,
   isTimeEngineReady,
+  search_time_query,
 } from '../services/timeEngine';
 import {
   searchQuery,
@@ -186,5 +187,34 @@ describe('SmartOmnibox', () => {
 
     setSearchQuery('');
     container.remove();
+  });
+
+  it('does not display "Parsed:" in the omnibox dropdown header', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    render(() => <SmartOmnibox />, container);
+
+    const input = container.querySelector('input')!;
+    input.focus();
+    setSearchQuery('Europe/Rome + 5');
+
+    expect(container.textContent).not.toContain('Parsed:');
+
+    setSearchQuery('');
+    container.remove();
+  });
+
+  it('resolves "Local + 5" to only GMT+6 when local is Europe/Rome (GMT+1)', () => {
+    const novTimestamp = 1731099600000; // Nov 8, 2024 (Rome is UTC+1 / CET)
+    const resp = search_time_query('Local + 5', novTimestamp, 'Europe/Rome');
+
+    expect(resp.is_ambiguous).toBe(false);
+    expect(resp.results.length).toBeGreaterThan(0);
+
+    // Every returned entry must be GMT+6 (21600s), never GMT+5 (18000s)
+    for (const r of resp.results) {
+      expect(r.offset_seconds).toBe(6 * 3600);
+      expect(r.gmt_offset_str).toBe('GMT+6');
+    }
   });
 });

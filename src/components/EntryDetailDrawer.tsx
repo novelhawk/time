@@ -96,16 +96,11 @@ export const EntryDetailDrawer: Component = () => {
                 </Show>
               </div>
 
-              {/* Live Big Time & Day Delta */}
+              {/* Live Big Time */}
               <div class="mt-2 flex items-baseline gap-3">
                 <time class="text-3xl sm:text-4xl font-bold text-primary tracking-wider tabular-nums">
                   {detail()!.formatted_time}
                 </time>
-                <Show when={detail()!.day_delta_from_local !== 0}>
-                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-tertiary-container text-on-tertiary-container">
-                    {detail()!.day_delta_from_local > 0 ? '+1d' : '-1d'}
-                  </span>
-                </Show>
               </div>
             </div>
 
@@ -170,7 +165,7 @@ export const EntryDetailDrawer: Component = () => {
               <h3 class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-2.5">
                 Offsets Matrix
               </h3>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div class="bg-surface-container p-3 rounded-xl border border-outline-variant/40">
                   <span class="text-[10px] text-on-surface-variant block uppercase tracking-wider">UTC Offset</span>
                   <span class="text-sm font-bold text-on-surface font-mono">{detail()!.utc_offset_str}</span>
@@ -183,20 +178,13 @@ export const EntryDetailDrawer: Component = () => {
                   <span class="text-[10px] text-on-surface-variant block uppercase tracking-wider">Local Delta</span>
                   <span class="text-sm font-bold text-on-surface font-mono">{detail()!.local_offset_str}</span>
                 </div>
-                <div class="bg-surface-container p-3 rounded-xl border border-outline-variant/40">
-                  <span class="text-[10px] text-on-surface-variant block uppercase tracking-wider">Day Offset</span>
-                  <span class="text-sm font-bold text-on-surface font-mono">
-                    {detail()!.day_delta_from_local >= 0 ? `+${detail()!.day_delta_from_local}` : detail()!.day_delta_from_local} d
-                  </span>
-                </div>
               </div>
             </div>
 
             {/* 2. Abbreviations & Seasonality Breakdown */}
             <div>
-              <h3 class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-2.5 flex items-center justify-between">
-                <span>Abbreviations & Seasonality</span>
-                <span class="text-[10px] font-normal lowercase opacity-60">● year-round • ◌ seasonal</span>
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-2.5">
+                Abbreviations & Seasonality
               </h3>
 
               <div class="bg-surface-container border border-outline-variant/40 rounded-xl overflow-hidden divide-y divide-outline-variant/20">

@@ -1,5 +1,5 @@
 import { Show, type Component } from 'solid-js';
-import type { ResolvedTimeEntry, DstTransitionInfo } from '../services/timeEngine';
+import type { ResolvedTimeEntry } from '../services/timeEngine';
 import AbbreviationPills from './AbbreviationPills';
 
 export interface ClockCardProps {
@@ -16,14 +16,6 @@ export interface ClockCardProps {
   onDragEnd?: (e: DragEvent) => void;
   onSelect?: () => void;
   onRemove?: () => void;
-}
-
-function formatCompactTransition(trans: DstTransitionInfo): string {
-  const date = new Date(trans.timestamp_ms);
-  const day = date.getUTCDate();
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const month = monthNames[date.getUTCMonth()];
-  return `→ ${trans.abbrev_after} ${day} ${month}`;
 }
 
 export const ClockCard: Component<ClockCardProps> = props => {
@@ -153,18 +145,11 @@ export const ClockCard: Component<ClockCardProps> = props => {
 
           <Show when={clock().abbreviations.length > 0}>
             <span class="opacity-40">•</span>
-            <AbbreviationPills abbreviations={clock().abbreviations} size="xs" />
-          </Show>
-
-          {/* Compact DST Transition indicator */}
-          <Show when={clock().uses_dst && clock().next_transition}>
-            <span
-              class="px-1.5 py-0.5 rounded border border-outline-variant/60 bg-surface-container-low text-on-surface-variant flex items-center gap-1 text-[10px]"
-              title={`Next DST transition: ${clock().next_transition?.abbrev_after} (${clock().next_transition?.iso_utc})`}
-            >
-              <span class="text-[9px] opacity-75">{clock().next_transition?.is_dst_after ? '☼' : '❄'}</span>
-              <span>{formatCompactTransition(clock().next_transition!)}</span>
-            </span>
+            <AbbreviationPills
+              abbreviations={clock().abbreviations}
+              nextTransition={clock().next_transition}
+              size="xs"
+            />
           </Show>
         </div>
       </div>
