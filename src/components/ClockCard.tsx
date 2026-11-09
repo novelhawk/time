@@ -142,6 +142,15 @@ export const ClockCard: Component<ClockCardProps> = props => {
             {clock().local_offset_str}
           </span>
 
+          <Show when={clock().day_delta_from_local !== 0}>
+            <span
+              class="px-1.5 py-0.5 rounded bg-surface-container-low border border-outline-variant/50"
+              title={`Day offset: ${clock().day_delta_from_local > 0 ? `+${clock().day_delta_from_local}` : clock().day_delta_from_local} day${Math.abs(clock().day_delta_from_local) === 1 ? '' : 's'} relative to your local time`}
+            >
+              DT{clock().day_delta_from_local > 0 ? `+${clock().day_delta_from_local}` : clock().day_delta_from_local}
+            </span>
+          </Show>
+
           <Show when={clock().abbreviations.length > 0}>
             <span class="opacity-40">•</span>
             <AbbreviationPills abbreviations={clock().abbreviations} size="xs" />
@@ -160,26 +169,17 @@ export const ClockCard: Component<ClockCardProps> = props => {
         </div>
       </div>
 
-      {/* Big Digital Clock & Day Offset */}
+      {/* Big Digital Clock */}
       <div
-        class={`flex shrink-0 ${
+        class={`flex shrink-0 items-baseline justify-end text-right ${
           isList()
-            ? 'items-baseline sm:items-end justify-between sm:justify-end gap-3 text-right'
-            : 'mt-6 items-baseline justify-between pt-4 border-t border-outline-variant/20'
+            ? 'self-end sm:self-auto'
+            : 'mt-6 pt-4 border-t border-outline-variant/20'
         }`}
       >
         <time class="text-3xl sm:text-4xl font-mono font-bold tracking-wider text-on-surface tabular-nums">
           {clock().formatted_time}
         </time>
-
-        <Show when={clock().day_delta_from_local !== 0}>
-          <span
-            class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-tertiary-container text-on-tertiary-container"
-            title={`Date shifted ${clock().day_delta_from_local > 0 ? '+1' : '-1'} day relative to your local time`}
-          >
-            {clock().day_delta_from_local > 0 ? '+1d' : '-1d'}
-          </span>
-        </Show>
       </div>
     </article>
   );

@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { render } from 'solid-js/web';
 import ClockBoard from './ClockBoard';
+import ClockCard from './ClockCard';
 import TopToolbar from './TopToolbar';
 import EntryDetailDrawer from './EntryDetailDrawer';
 import {
   initTimeEngine,
+  type ResolvedTimeEntry,
 } from '../services/timeEngine';
 import {
   viewMode,
@@ -204,6 +206,80 @@ describe('ClockBoard, TopToolbar & EntryDetailDrawer', () => {
 
     // Clean up / reset
     reorderEntries(['local', 'iana:UTC']);
+    container.remove();
+  });
+
+  it('places day offset DT pill in offsets row and flushes timer to the right in list and grid views', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    const mockClockDelta: ResolvedTimeEntry = {
+      id: 'iana:Asia/Tokyo',
+      kind: 'iana',
+      primary_label: 'Tokyo',
+      subtitle_context: 'Japan',
+      formatted_time: '08:45:00',
+      formatted_date: '2026-11-09',
+      day_delta_from_local: 1,
+      utc_offset_str: 'UTC+09:00',
+      gmt_offset_str: 'GMT+9',
+      local_offset_str: 'Local +08:00',
+      abbreviations: [{ code: 'JST', is_currently_active: true, is_year_round: true }],
+      uses_dst: false,
+      next_transition: null,
+      sibling_iana_zones: ['Asia/Tokyo'],
+      epoch_ms: 1794181500000,
+    };
+
+    // 1. List View
+    const listDispose = render(() => <ClockCard clock={mockClockDelta} viewMode="list" />, container);
+    const listCard = container.querySelector('article')!;
+    expect(listCard.textContent).toContain('DT+1');
+
+    const listTime = listCard.querySelector('time')!;
+    expect(listTime.textContent).toBe('08:45:00');
+
+    // The timer container should only hold <time> and be flushed to the right
+    const listTimeContainer = listTime.parentElement!;
+    expect(listTimeContainer.children.length).toBe(1);
+    expect(listTimeContainer.className).toContain('justify-end');
+    expect(listTimeContainer.className).toContain('text-right');
+    expect(listTimeContainer.textContent?.trim()).toBe('08:45:00');
+
+    listDispose();
+    container.innerHTML = '';
+
+    // 2. Grid View
+    const gridDispose = render(() => <ClockCard clock={mockClockDelta} viewMode="grid" />, container);
+    const gridCard = container.querySelector('article')!;
+    expect(gridCard.textContent).toContain('DT+1');
+
+    const gridTime = gridCard.querySelector('time')!;
+    expect(gridTime.textContent).toBe('08:45:00');
+
+    const gridTimeContainer = gridTime.parentElement!;
+    expect(gridTimeContainer.children.length).toBe(1);
+    expect(gridTimeContainer.className).toContain('justify-end');
+    expect(gridTimeContainer.className).toContain('text-right');
+    expect(gridTimeContainer.className).toContain('border-t');
+    expect(gridTimeContainer.textContent?.trim()).toBe('08:45:00');
+
+    gridDispose();
+    container.innerHTML = '';
+
+    // 3. Zero day delta: DT pill must NOT appear
+    const mockClockZero: ResolvedTimeEntry = {
+      ...mockClockDelta,
+      id: 'local',
+      primary_label: 'Local',
+      day_delta_from_local: 0,
+    };
+    const zeroDispose = render(() => <ClockCard clock={mockClockZero} viewMode="list" />, container);
+    const zeroCard = container.querySelector('article')!;
+    expect(zeroCard.textContent).not.toContain('DT');
+    expect(zeroCard.textContent).toContain('08:45:00');
+
+    zeroDispose();
     container.remove();
   });
 });
