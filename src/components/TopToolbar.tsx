@@ -13,13 +13,16 @@ export const TopToolbar: Component = () => {
   return (
     <header class="w-full border-b border-outline-variant/30 bg-surface/85 backdrop-blur-md sticky top-0 z-40 px-3 py-2.5 sm:px-6">
       <div class="max-w-6xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
-        {/* Centered Minimalist Omnibox */}
-        <div class="flex-1 max-w-2xl mx-auto">
+        {/* Left Balancing Spacer (flex-grow: 1) */}
+        <div class="flex-1 min-w-0" aria-hidden="true" />
+
+        {/* Centered Minimalist Omnibox (flex-grow: 2 + max-w-2xl) */}
+        <div class="grow-[2] max-w-2xl min-w-0">
           <SmartOmnibox />
         </div>
 
-        {/* Right Icon-Only Action Buttons */}
-        <div class="flex items-center gap-1.5 shrink-0">
+        {/* Right Action Buttons (flex-grow: 1 with buttons right-aligned) */}
+        <div class="flex-1 flex items-center justify-end gap-1.5 shrink-0">
           {/* View Mode Switcher (List <-> Grid) */}
           <button
             type="button"

@@ -47,6 +47,39 @@ describe('ClockBoard, TopToolbar & EntryDetailDrawer', () => {
     container.remove();
   });
 
+  it('renders TopToolbar with symmetrical 3-item flex layout to center the search bar', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    render(() => <TopToolbar />, container);
+
+    const toolbarContainer = container.querySelector('header > div') as HTMLElement;
+    expect(toolbarContainer).toBeDefined();
+    expect(toolbarContainer.className).toContain('flex');
+    expect(toolbarContainer.className).toContain('justify-between');
+
+    // 3 children: left spacer, center omnibox container, right buttons container
+    const children = Array.from(toolbarContainer.children) as HTMLElement[];
+    expect(children.length).toBe(3);
+
+    const [leftSpacer, centerOmnibox, rightButtons] = children;
+
+    // 1. Left spacer: flex-1
+    expect(leftSpacer.getAttribute('aria-hidden')).toBe('true');
+    expect(leftSpacer.className).toContain('flex-1');
+
+    // 2. Center container: grow-[2] and max-w-2xl
+    expect(centerOmnibox.className).toContain('grow-[2]');
+    expect(centerOmnibox.className).toContain('max-w-2xl');
+    expect(centerOmnibox.querySelector('input')).toBeDefined();
+
+    // 3. Right container: flex-1 with justify-end
+    expect(rightButtons.className).toContain('flex-1');
+    expect(rightButtons.className).toContain('justify-end');
+    expect(rightButtons.querySelectorAll('button').length).toBe(2);
+
+    container.remove();
+  });
+
   it('renders clock cards with time, offsets, and DST indicators', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
