@@ -33,17 +33,15 @@ export const ClockCard: Component<ClockCardProps> = props => {
       onDragLeave={props.onDragLeave}
       onDrop={props.onDrop}
       onDragEnd={props.onDragEnd}
-      class={`group relative bg-surface-container border transition-all cursor-grab active:cursor-grabbing select-none shadow-xs hover:shadow-md ${
-        props.isDragging
+      class={`group relative bg-surface-container border transition-all cursor-grab active:cursor-grabbing select-none shadow-xs hover:shadow-md ${props.isDragging
           ? 'opacity-35 scale-[0.98] border-dashed border-primary shadow-inner'
           : props.isDragOver
-          ? 'border-primary ring-2 ring-primary ring-offset-2 scale-[1.01]'
-          : 'border-outline-variant/40 hover:border-outline/80'
-      } rounded-2xl ${
-        isList()
-          ? 'p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'
-          : 'p-5 flex flex-col justify-between min-h-[170px]'
-      }`}
+            ? 'border-primary ring-2 ring-primary ring-offset-2 scale-[1.01]'
+            : 'border-outline-variant/40 hover:border-outline/80'
+        } rounded-2xl p-4 flex flex-col ${isList()
+          ? 'sm:flex-row sm:items-center sm:justify-between gap-4'
+          : 'justify-between min-h-[170px]'
+        }`}
       onClick={() => props.onSelect?.()}
       role="button"
       tabIndex={0}
@@ -156,11 +154,10 @@ export const ClockCard: Component<ClockCardProps> = props => {
 
       {/* Big Digital Clock */}
       <div
-        class={`flex shrink-0 items-baseline justify-end text-right ${
-          isList()
-            ? 'self-end sm:self-auto'
+        class={`flex shrink-0 items-baseline ${isList()
+            ? 'sm:justify-end sm:text-right sm:self-end sm:self-auto'
             : 'mt-6 pt-4 border-t border-outline-variant/20'
-        }`}
+          }`}
       >
         <time class="text-3xl sm:text-4xl font-mono font-bold tracking-wider text-on-surface tabular-nums">
           {clock().formatted_time}
