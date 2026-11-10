@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": {
-    "npm": ">=12.0.0",
-    "node": ">=24.0.0"
+  "devEngines": {
+    "packageManager": "^pnpm@12.16.1"
   },
   "scripts": {
     "dev": "pnpm run build:wasm && vite",
