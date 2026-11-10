@@ -18,15 +18,17 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - name: Install pnpm and node
+        uses: pnpm/setup@v1
         with:
-          node-version: 24
+          version: 11
+          runtime: node@24
+          cache: true
 
       - name: Install Dependencies & Build
         run: |
-          npm ci
-          npm run build
+          pnpm ci
+          pnpm run build
 
       - name: Deploy
         uses: cloudflare/wrangler-action@v4
