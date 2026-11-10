@@ -288,6 +288,14 @@ pub fn is_known_abbreviation(abbr: &str) -> bool {
     )
 }
 
+fn is_reserved_base_keyword(s: &str) -> bool {
+    let lower = s.to_ascii_lowercase();
+    matches!(
+        lower.as_str(),
+        "local" | "here" | "current" | "system" | "device" | "utc" | "zulu" | "gmt"
+    )
+}
+
 /// Location query fallback: country/city names (e.g. `Italy`, `Rome`, `Tokyo`, `New York`, `San Francisco`)
 fn location_query_p<'a>() -> Parser<'a, BaseZoneExpr> {
     Parser::new(|inp| {
@@ -316,7 +324,7 @@ fn location_query_p<'a>() -> Parser<'a, BaseZoneExpr> {
 
         if idx > 0 {
             let loc = trimmed[..idx].trim();
-            if !loc.is_empty() {
+            if !loc.is_empty() && !is_reserved_base_keyword(loc) {
                 return vec![(BaseZoneExpr::LocationQuery(loc.to_string()), &trimmed[idx..])];
             }
         }

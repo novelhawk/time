@@ -170,7 +170,7 @@ pub const ABBREV_FAMILIES: &[AbbrevFamilyDef] = &[
             "Europe/Busingen",
             "Africa/Ceuta",
         ],
-        generic: Some(("CET/CEST", "Central European Time")),
+        generic: None,
         standard: Some(("CET", "Central European Time")),
         daylight: Some(("CEST", "Central European Summer Time")),
         fixed: None,

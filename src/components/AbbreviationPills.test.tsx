@@ -56,4 +56,44 @@ describe('AbbreviationPills', () => {
     expect(pdtParent?.className).toContain('border-outline-variant');
     expect(pdtParent?.className).toContain('opacity-50');
   });
+
+  it('displays upcoming transition date on hover for matching inactive seasonal badge', () => {
+    const badges: AbbreviationBadge[] = [
+      {
+        code: 'CET',
+        full_name: 'Central European Time',
+        kind: 'standard_seasonal',
+        is_currently_active: true,
+        is_year_round: false,
+      },
+      {
+        code: 'CEST',
+        full_name: 'Central European Summer Time',
+        kind: 'daylight_seasonal',
+        is_currently_active: false,
+        is_year_round: false,
+      },
+    ];
+
+    const transition = {
+      timestamp_ms: Date.UTC(2026, 2, 29, 1, 0, 0), // 29 Mar 2026
+      iso_utc: '2026-03-29T01:00:00Z',
+      local_time_before: '02:00',
+      local_time_after: '03:00',
+      abbrev_before: 'CET',
+      abbrev_after: 'CEST',
+      offset_before_seconds: 3600,
+      offset_after_seconds: 7200,
+      is_dst_after: true,
+    };
+
+    const container = document.createElement('div');
+    render(() => <AbbreviationPills abbreviations={badges} nextTransition={transition} />, container);
+
+    const pills = container.querySelectorAll('span.font-mono');
+    expect(pills.length).toBe(2);
+
+    const cestParent = pills[1].closest('span.inline-flex');
+    expect(cestParent?.getAttribute('title')).toBe('Central European Summer Time • Active on 29 Mar');
+  });
 });

@@ -222,18 +222,12 @@ export const SmartOmnibox: Component = () => {
       {/* Live Preview Dropdown */}
       <Show when={isOpen() && searchQuery().trim().length > 0}>
         <div class="absolute top-full left-0 right-0 mt-2 z-50 bg-surface-container/95 backdrop-blur-2xl border border-outline-variant/60 rounded-2xl shadow-2xl overflow-hidden max-h-[72vh] flex flex-col">
-          {/* Header Status Bar (Disambiguation & Math Summary) */}
+          {/* Header Status Bar (Disambiguation & Keyboard Shortcuts) */}
           <div class="px-4 py-2 bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between text-xs text-on-surface-variant font-mono">
             <div class="flex items-center gap-2 overflow-hidden">
               <Show when={response().is_ambiguous}>
                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-tertiary-container text-on-tertiary-container text-[10px] font-medium tracking-tight whitespace-nowrap">
                   Ambiguous Query • Multiple Results
-                </span>
-              </Show>
-
-              <Show when={response().parsed_expression_summary}>
-                <span class="truncate opacity-80" title={response().parsed_expression_summary ?? ''}>
-                  Parsed: <span class="text-primary font-semibold">{response().parsed_expression_summary}</span>
                 </span>
               </Show>
             </div>
@@ -319,7 +313,11 @@ export const SmartOmnibox: Component = () => {
 
                           <Show when={entry.abbreviations.length > 0}>
                             <span class="opacity-40">•</span>
-                            <AbbreviationPills abbreviations={entry.abbreviations} size="xs" />
+                            <AbbreviationPills
+                              abbreviations={entry.abbreviations}
+                              nextTransition={entry.next_transition}
+                              size="xs"
+                            />
                           </Show>
                         </div>
                       </div>

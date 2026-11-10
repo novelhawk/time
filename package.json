@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "verison": ">=12.0.0"
+    }
+  },
   "scripts": {
     "dev": "pnpm run build:wasm && vite",
     "build:wasm": "wasm-pack build crates/time-engine-wasm --target web --out-dir ../../src/wasm-pkg",
@@ -24,6 +30,8 @@
     "vite-plugin-solid": "^2.11.1",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-plugin-wasm": "^3.4.1",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "wasm-pack": "^0.15.1",
+    "wrangler": "^4.158.0"
   }
 }

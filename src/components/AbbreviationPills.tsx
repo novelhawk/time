@@ -1,10 +1,19 @@
 import { For, type Component } from 'solid-js';
-import type { AbbreviationBadge } from '../services/timeEngine';
+import type { AbbreviationBadge, DstTransitionInfo } from '../services/timeEngine';
 
 export interface AbbreviationPillsProps {
   abbreviations?: AbbreviationBadge[];
+  nextTransition?: DstTransitionInfo | null;
   class?: string;
   size?: 'xs' | 'sm';
+}
+
+function formatTransitionDate(timestampMs: number): string {
+  const date = new Date(timestampMs);
+  const day = date.getUTCDate();
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = monthNames[date.getUTCMonth()];
+  return `${day} ${month}`;
 }
 
 export const AbbreviationPills: Component<AbbreviationPillsProps> = props => {
@@ -27,7 +36,7 @@ export const AbbreviationPills: Component<AbbreviationPillsProps> = props => {
             );
           }
 
-          // 2. Active Seasonal / DST-dependent (e.g., PST in winter, PDT in summer, CET/CEST)
+          // 2. Active Seasonal / DST-dependent (e.g., PST in winter, PDT in summer)
           if (badge.is_currently_active) {
             const isDaylight = badge.kind === 'daylight_seasonal';
             return (
@@ -45,16 +54,20 @@ export const AbbreviationPills: Component<AbbreviationPillsProps> = props => {
             );
           }
 
-          // 3. Inactive Seasonal (e.g., PDT during winter)
+          // 3. Inactive Seasonal (e.g., PDT during winter, CEST during winter)
           const isDaylight = badge.kind === 'daylight_seasonal';
+          const isUpcoming = props.nextTransition && props.nextTransition.abbrev_after === badge.code;
+          const tooltip = isUpcoming
+            ? `${badge.full_name} • Active on ${formatTransitionDate(props.nextTransition!.timestamp_ms)}`
+            : `${badge.full_name} • Inactive (${isDaylight ? 'Daylight Saving Time' : 'Standard Time'})`;
+
           return (
             <span
               class={`inline-flex items-center rounded-md border-dashed border-outline-variant bg-surface-container-low/50 text-on-surface-variant/70 opacity-50 hover:opacity-80 transition-opacity select-none ${sizeClasses()}`}
-              title={`${badge.full_name} • Inactive Seasonal (${isDaylight ? 'Daylight Saving Time' : 'Standard Time'})`}
+              title={tooltip}
             >
               <span class="w-1.5 h-1.5 rounded-full border border-outline-variant" aria-hidden="true" />
-              <span class="font-mono tracking-tight line-through opacity-75">{badge.code}</span>
-              <span class="text-[9px] opacity-60">→</span>
+              <span class="font-mono tracking-tight opacity-75">{badge.code}</span>
             </span>
           );
         }}
