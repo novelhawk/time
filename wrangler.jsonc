@@ -13,6 +13,7 @@
     }
   ],
   "vars": {
-    "NODE_VERSION": "26"
-  }
+    "NODE_VERSION": "26",
+    "PNPM_VERSION": "12.16.1",
+  },
 }
