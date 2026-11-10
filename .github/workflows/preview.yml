@@ -13,6 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Set Short SHA
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -37,16 +40,17 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: preview --name ${{ format('{0}', slice(github.event.pull_request.head.sha, 0, 7)) }}-time
+          command: preview --name ${{ env.SHORT_SHA }}-time
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Comment on PR
+      - name: Deploy message
+        uses: unsplash/comment-on-pr@v1.3.0
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PREVIEW_URL: ${{ steps.preview.outputs.preview-url }}
           DEPLOYMENT_URL: ${{ steps.preview.outputs.preview-deployment-url }}
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} \
-            --body "✅ **Preview deploy complete!**
+        with:
+          msg: "✅ **Preview deploy complete!**
           - **Preview URL:** ${PREVIEW_URL}
           - **Commit Deployment URL:** ${DEPLOYMENT_URL}"
+
